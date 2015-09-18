@@ -16,7 +16,6 @@
 #	- col 2 of datafile
 # 
 # USAGE:
-# Run the following within directory containing [datafile]:
 # ./sigmoid.R [datafile] [start]
 # 
 # EXAMPLE:
@@ -58,20 +57,20 @@ if (nrow(bin_data) == 0) {
 }
 print(copy_number)
 # Get non-linear least square estimates for parameters of sigmoid function
-fitModel = nls(copy_number ~  a+(d/(1 + exp(-b*(minutes-c)))), start=list(a=1,b=.5, c=40, d=1), trace=TRUE, control = nls.control(warnOnly = TRUE))
-params = coef(fitModel)
+fitModel <- nls(copy_number ~  a+(d/(1 + exp(-b*(minutes-c)))), start=list(a=1,b=.5, c=40, d=1), trace=TRUE, control = nls.control(warnOnly = TRUE))
+params <- coef(fitModel)
 print(params)
 # Make list of minute values for function plotting
 new_minutes <- seq(0,95);
 # Get new model fit values
-fit_values = sigmoid(params, new_minutes);
+fit_values <- sigmoid(params, new_minutes);
 # Plot result
 profileFile <- paste("sigmoidfit_", start, ".pdf", sep="");
 profilePath <- paste(wkDir, profileFile, sep="/");
 end <- start + 1000
 pdf(profilePath, width=6, height=6);
     title <- paste("Copy number (blue) and fit (red)\n for ", chr, " and bin ", start, "-", end , sep="");
-    plot(minutes, copy_number, main = title,  ylab= "Copy number", ylim=c(0.8,2.2), pch = 20, col = "blue");
+    plot(minutes, copy_number, main = title,  ylab= "Copy number", xlab="Minutes", pch = 20, col = "blue");
     lines(new_minutes, fit_values, pch=20, col="red");
 dev.off();
 
