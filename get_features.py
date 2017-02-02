@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+import argparse
+
+parser=argparse.ArgumentParser(description='Map segments')
+parser.add_argument('-i', help='tracefile', type=str, required=True)
+args = parser.parse_args()
 
 
 
@@ -49,59 +54,48 @@ def get_nick1_distance(molID):
 				IN.close()
 				return float(nextline.split()[1])
 
-def get_ref_nick_start(molID):
+def get_ref_data(molID):
 	IN = open('93620B2ecli_2017-01-03_15_25_greenFiltered_errF_contig1.xmap', 'r')
 	for line in IN:
 		splitline = line.split()
 		if splitline[1] == molID:
-			return float(splitline[5])
-
-
-
-
-
-
-
-
-		
-
-	
-
-
-	
-
+			IN.close()
+			return [float(splitline[5]), float(splitline[6]), splitline[7]]
 
 
 def main():
 
-	TRACE = open('93620B2ecli_2017-01-03_15_25_middle_traceFile.txt', 'r')
-	OUT = open('new_test.txt', 'w')
+	TRACE = open(args.i, 'r')
+	OUT = open('segment_fix_orientation_' + args.i[-3:], 'w')
 
-	TRACE.readline()
 	counter = 0
 	fiber_num = 0
 
 	for pixelline in TRACE:
-			counter +=1
-			if counter % 10 == 0:
-				print 'On line: ' + str(counter)
-			# Skip intensity line
-			next(TRACE)
-			# Get segmentation level
-			segmentline = next(TRACE)
-			molecule_ID = pixelline.split()[0]
-			if molecule_ID != segmentline.split()[0]:
-				print 'ERROR: molecule IDs do not match'
-				quit()
-			num_pix = len(segmentline.split()) - 1
-			pixWidth = pixel_width(molecule_ID, num_pix)
-			seg_array = segmentline.split()[1:]
-			seg_idx_list = segment_indices(map(float,seg_array))
-			
-			# Get distance of first nick to subtract from reference start
-			nick1_distance = get_nick1_distance(molecule_ID)
-			# Map to reference
-			ref_nick_start = get_ref_nick_start(molecule_ID)
+		counter +=1
+		if counter % 10 == 0:
+			print 'On line: ' + str(counter)
+		# Skip intensity line
+		next(TRACE)
+		# Get segmentation level
+		segmentline = next(TRACE)
+		molecule_ID = pixelline.split()[0]
+		if molecule_ID != segmentline.split()[0]:
+			print 'ERROR: molecule IDs do not match'
+			quit()
+		num_pix = len(segmentline.split()) - 1
+		pixWidth = pixel_width(molecule_ID, num_pix)
+		seg_array = segmentline.split()[1:]
+		seg_idx_list = segment_indices(map(float,seg_array))
+		
+		# Get distance of first nick to subtract from reference 
+		nick1_distance = get_nick1_distance(molecule_ID)
+		# Map to reference
+		ref_data = get_ref_data(molecule_ID)
+		if ref_data:
+			ref_nick_start = ref_data[0]
+			ref_nick_end = ref_data[1]
+			orientation = ref_data[2]
 
 			# For preserving info for multiple segments in one fiber
 			# if ref_nick_start:
@@ -115,19 +109,24 @@ def main():
 			# 					fiber_num +=1
 			# 				OUT.write(str(fiber_num) + '\t')
 			# 				OUT.write(str(segment_start)+'\t'+str(segment_end)+'\n')
-			if ref_nick_start:
-				ref_start = ref_nick_start - nick1_distance
-				if ref_start > 0 :
-					for seg_index in seg_idx_list:	
-						segment_start = ref_start + (pixWidth * (seg_index[0]+1))
-						segment_end = ref_start + (pixWidth * (seg_index[1]+1))
-						if segment_end - segment_start >= 10000:
-							OUT.write(str(segment_start)+'\t'+str(segment_end)+'\n')
-
-			if counter == 100:
-				TRACE.close()
-				OUT.close()
-				quit()
+			if orientation == '+':
+				if ref_nick_start:
+					ref_start = ref_nick_start - nick1_distance
+					if ref_start > 0 :
+						for seg_index in seg_idx_list:	
+							segment_start = ref_start + (pixWidth * (seg_index[0]+1))
+							segment_end = ref_start + (pixWidth * (seg_index[1]+1))
+							if segment_end - segment_start >= 10000:
+								OUT.write(str(segment_start)+'\t'+str(segment_end)+'\n')
+			elif orientation == '-':
+				if ref_nick_end:
+					ref_end = ref_nick_end + nick1_distance
+					if ref_end > 0 :
+						for seg_index in seg_idx_list:	
+							segment_start = ref_end - (pixWidth * (seg_index[1]+1))
+							segment_end = ref_end - (pixWidth * (seg_index[0]+1))
+							if segment_end - segment_start >= 10000:
+								OUT.write(str(segment_start)+'\t'+str(segment_end)+'\n')
 
 	TRACE.close()
 	OUT.close()
