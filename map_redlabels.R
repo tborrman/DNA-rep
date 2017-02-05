@@ -98,44 +98,73 @@ abline(v=3900000, col="red")
 dev.off()
 
 #################################################################################
-# Filter out segments with red labels within 10kb of both ends
+# Filter out segments with red labels within 10kb of both ends (has to be both ends)
 filtered_IDs = c()
 
-png("segments_10-50_redlabels_neighbors_10kb_zoom.png", height=5000, width=4000, res=300)
+png("segments_10-50_redlabels_neighbors_both_ends_10kb_zoom.png", height=5000, width=4000, res=300)
 first_plot = FALSE
 for (i in c(1:nrow(table))) {
   
+  
   red_row <- which(red_table$molID == table[i,"molID"])
   close = FALSE
+  LEFT = FALSE
+  RIGHT = FALSE
   
   if (length(red_row) > 0 ) {
     for (row in red_row) {
       red_bp = red_table[row, "bp"]
       seg_start = table[i, "start"]
       seg_end = table[i,"stop"]
-      if (! close & ! first_plot) {
+      if (! close) {
         # Check if close
         if ((abs(seg_start - red_bp) < 10000) | (abs(seg_end - red_bp) < 10000)) {
+          if (abs(seg_start - red_bp) < 10000) {
+            LEFT = TRUE
+          }
+          else if (abs(seg_end - red_bp) < 10000) {
+            RIGHT = TRUE
+          }
           close = TRUE
-          first_plot=TRUE
-          plot(c(seg_start, seg_end), rep(table[1,"segment"], 2), type='l', col="blue", xlim=c(3600000,4200000), ylim=c(0,1944))
-          points(red_bp, table[i,"segment"], col="red", pch=20)
-          filtered_IDs <- c(filtered_IDs, table[i, "molID"])
+          
+          old_pointx = red_bp
+          old_pointy = table[i, "segment"]          
+
         }
       }
-      else if (close) {
-        if ((abs(seg_start - red_bp) < 10000) | (abs(seg_end - red_bp) < 10000)) {
-          points(red_bp, table[i,"segment"], col="red", pch=20)
-        }
+      else if (close & ! first_plot) {
+          if (LEFT & (abs(seg_end - red_bp) < 10000)) {
+            plot(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue", xlim=c(3600000,4200000), ylim=c(0,1944))
+            points(red_bp, table[i,"segment"], col="red", pch=20)
+            points(old_pointx, old_pointy, col="red", pch=20)
+            filtered_IDs <- c(filtered_IDs, table[i, "molID"])
+            first_plot=TRUE
+          }
+          else if (RIGHT & (abs(seg_start - red_bp) < 10000)) {
+            plot(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue", xlim=c(3600000,4200000), ylim=c(0,1944))
+            points(red_bp, table[i,"segment"], col="red", pch=20)
+            points(old_pointx, old_pointy, col="red", pch=20)
+            points(red_bp, table[i,"segment"], col="red", pch=20)
+            first_plot=TRUE
+          }
       }
-      else if (! close & first_plot) {
-        if ((abs(seg_start - red_bp) < 10000) | (abs(seg_end - red_bp) < 10000)) {
-          close = TRUE
+      else if (close & first_plot) {
+        if (LEFT & (abs(seg_end - red_bp) < 10000)) {
           lines(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue")
           points(red_bp, table[i,"segment"], col="red", pch=20)
+          points(old_pointx, old_pointy, col="red", pch=20)
           filtered_IDs <- c(filtered_IDs, table[i, "molID"])
+          
+        }
+        else if (RIGHT & (abs(seg_start - red_bp) < 10000)) {
+          lines(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue")
+          points(red_bp, table[i,"segment"], col="red", pch=20)
+          points(old_pointx, old_pointy, col="red", pch=20)
+          points(red_bp, table[i,"segment"], col="red", pch=20)
+          
         }
       }
+
     }
     
   }
@@ -152,7 +181,79 @@ write(filtered_IDs, "segments_10-50_redlabels_neighbors_10kb_molID_list.txt", se
 
 
 
+#################################################################################
+# Filter out segments with red labels within 10kb of both ends (has to be both ends)
+filtered_IDs = c()
 
+png("segments_10-50_redlabels_neighbors_both_ends_10kb.png", height=3000, width=6000, res=300)
+first_plot = FALSE
+for (i in c(1:nrow(table))) {
+  
+  
+  red_row <- which(red_table$molID == table[i,"molID"])
+  close = FALSE
+  LEFT = FALSE
+  RIGHT = FALSE
+  
+  if (length(red_row) > 0 ) {
+    for (row in red_row) {
+      red_bp = red_table[row, "bp"]
+      seg_start = table[i, "start"]
+      seg_end = table[i,"stop"]
+      if (! close) {
+        # Check if close
+        if ((abs(seg_start - red_bp) < 10000) | (abs(seg_end - red_bp) < 10000)) {
+          if (abs(seg_start - red_bp) < 10000) {
+            LEFT = TRUE
+          }
+          else if (abs(seg_end - red_bp) < 10000) {
+            RIGHT = TRUE
+          }
+          close = TRUE
+          
+          old_pointx = red_bp
+          old_pointy = table[i, "segment"]          
+          
+        }
+      }
+      else if (close & ! first_plot) {
+        if (LEFT & (abs(seg_end - red_bp) < 10000)) {
+          plot(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue", xlim=c(0,7500000), ylim=c(0,1944))
+          points(red_bp, table[i,"segment"], col="red", pch=20, cex = 0.5)
+          points(old_pointx, old_pointy, col="red", pch=20, cex = 0.5)
+          filtered_IDs <- c(filtered_IDs, table[i, "molID"])
+          first_plot=TRUE
+        }
+        else if (RIGHT & (abs(seg_start - red_bp) < 10000)) {
+          plot(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue", xlim=c(0,7500000), ylim=c(0,1944))
+          points(red_bp, table[i,"segment"], col="red", pch=20, cex = 0.5)
+          points(old_pointx, old_pointy, col="red", pch=20, cex = 0.5)
+          
+          first_plot=TRUE
+        }
+      }
+      else if (close & first_plot) {
+        if (LEFT & (abs(seg_end - red_bp) < 10000)) {
+          lines(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue")
+          points(red_bp, table[i,"segment"], col="red", pch=20, cex = 0.5)
+          points(old_pointx, old_pointy, col="red", pch=20, cex = 0.5)
+          filtered_IDs <- c(filtered_IDs, table[i, "molID"])
+          
+        }
+        else if (RIGHT & (abs(seg_start - red_bp) < 10000)) {
+          lines(c(seg_start, seg_end), rep(table[i,"segment"], 2), type='l', col="blue")
+          points(old_pointx, old_pointy, col="red", pch=20, cex = 0.5)
+          points(red_bp, table[i,"segment"], col="red", pch=20, cex = 0.5)
+
+        }
+      }
+      
+    }
+    
+  }
+}
+abline(v=3900000, col="red")
+dev.off()
 
 
 
