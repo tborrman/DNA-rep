@@ -4,15 +4,38 @@ import argparse
 import re
 import numpy as np
 parser = argparse.ArgumentParser(description='create bedfile for bionano data')
+parser.add_argument('-b', help='input bnx file', type=str, required=True)
+parser.add_argument('-o', help='output bed file', type=str, required=True)
+parser.add_argument('-e', help='exclude singleton labels', type=bool, default=False)
 args = parser.parse_args()
+
+
+def filter_red_labels(red_labels):
+	'''
+	Get index of red labels to keep
+	'''
+	idx_to_keep = []
+	for idx in range(len(red_labels)):
+		total_neighbors = 0
+		test_label = red_labels[idx]
+		for query_label in red_labels:
+			if abs(test_label - query_label) < 20000 :
+				total_neighbors +=1
+		if total_neighbors > 5:
+			idx_to_keep.append(idx)
+	return idx_to_keep
 
 
 def main():
 
 	# Open bnx file with red signal data
 	counter = 1
-	OUT = open('red_labels.bed', 'w')
-	BNX = open('Molecules (647dU).bnx', 'r')
+	OUT = open(args.o, 'w')
+	BNX = open(args.b, 'r')
+	if args.e:
+		min_redlabel = 3
+	else:
+		min_redlabel = 2
 	for line in BNX:
 		if counter % 1000 == 0:
 			print 'On line ' + str(counter)
@@ -23,7 +46,7 @@ def main():
 			if red_line[0] != '1':
 				print 'ERROR in line format'
 				quit()
-			if len(red_line.split()) > 2:
+			if len(red_line.split()) > min_redlabel:
 
 				XMAP = open('all.xmap', 'r')
 				xmap_str = XMAP.read()
@@ -55,6 +78,10 @@ def main():
 					else:
 						'ERROR no orientation'
 						quit()
+
+					idx_red_to_keep = filter_red_labels(aligned_red)
+					filtered_aligned_red = [aligned_red[i] for i in idx_red_to_keep]
+
 					# Get label intensity
 					next(BNX)
 					next(BNX)
@@ -67,9 +94,11 @@ def main():
 					if Orientation == '-':
 						intensity.reverse()
 
-					for lab_idx in range(len(aligned_red)):
-						OUT.write(chrom + '\t' + str(aligned_red[lab_idx]) + 
-						'\t' + str(aligned_red[lab_idx] + 1) + '\t' +  intensity[lab_idx] + '\n')
+					filtered_intensity = [intensity[i] for i in idx_red_to_keep]
+
+					for lab_idx in range(len(filtered_aligned_red)):
+						OUT.write(chrom + '\t' + str(filtered_aligned_red[lab_idx]) + 
+						'\t' + str(filtered_aligned_red[lab_idx] + 1) + '\t' +  filtered_intensity[lab_idx] + '\n')
 
 					# Check if xmap entries ever have reversed refpos
 					if RefStartPos >= float(xline[6]):
