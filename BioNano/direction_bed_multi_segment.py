@@ -35,11 +35,12 @@ def calc_direction(intensity_sig):
 	mid= int(round(float(len(intensity_sig)) / 2))
 	first_half = np.array(map(float, intensity_sig[:mid]))
 	second_half = np.array(map(float, intensity_sig[mid:]))
+	strength = abs(np.mean(first_half) - np.mean(second_half))
 	if np.mean(first_half) >= np.mean(second_half):
 		direction = '+'
 	else:
 		direction = '-'
-	return direction
+	return direction, strength
 
 def idx_start_and_end_segments(label_pos, idx_to_keep):
 
@@ -77,7 +78,7 @@ def main():
 	counter = 1
 	OUT = open(args.o, 'w')
 	# OUT2 is now just for red signal on molecules with > 3 segments (.bedGraphs)
-	OUT2 = open(args.o + 'Graph', 'w')
+	#OUT2 = open(args.o + 'Graph', 'w')
 	BNX = open(args.b, 'r')
 	if args.e:
 		min_redlabel = 3
@@ -143,9 +144,9 @@ def main():
 						segment_idx = idx_start_and_end_segments(aligned_red, idx_red_to_keep)
 						if len(segment_idx) > 1:
 
-							if len(segment_idx) >= 3:
-								# Write red signal bed file for molecules with greater than 3 segments
-								write_red_signal_bed(chrom, aligned_red, intensity, idx_red_to_keep, OUT2)
+							# if len(segment_idx) >= 3:
+							# 	# Write red signal bed file for molecules with greater than 3 segments
+							# 	write_red_signal_bed(chrom, aligned_red, intensity, idx_red_to_keep, OUT2)
 
 							for segment_start_end in segment_idx:
 								# Get start and end of segment
@@ -153,11 +154,11 @@ def main():
 								segment_end_bp = aligned_red[segment_start_end[1]]
 								# Get direction of segment
 								intensity_segment = intensity[segment_start_end[0]:segment_start_end[1] + 1]
-								direction = calc_direction(intensity_segment)
+								direction, strength = calc_direction(intensity_segment)
 
 
 								# Write to bedfile
-								OUT.write(chrom +'\t'+str(segment_start_bp)+'\t'+str(segment_end_bp)+'\t'+mol_id+'\t0\t'+direction+'\n')
+								OUT.write(chrom +'\t'+str(segment_start_bp)+'\t'+str(segment_end_bp)+'\t'+mol_id+'\t'+direction+'\t'+ str(round(strength,2)) +'\n')
 
 
 
