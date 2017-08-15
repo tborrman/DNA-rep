@@ -74,6 +74,8 @@ def get_mean_ds(dfile, hfile):
 	leftforks = []
 	rightforks = []
 
+	window = 200000 # Look window size upstream and downstream of bin
+
 	with open(hfile, 'r') as H: 
 		for i, hline in enumerate(H):
 			if i%100 == 0:
@@ -81,7 +83,7 @@ def get_mean_ds(dfile, hfile):
 			ds_left_sum = 0
 			ds_right_sum = 0
 			h_chrom, h_start, h_end = hline.split()
-			intervalH = [int(h_start), int(h_end)]
+			intervalH = [int(h_start) - window, int(h_end) + window]
 			with open(dfile, 'r') as D:
 				for j, dline in enumerate(D):
 					d_chrom, d_start, d_end, d_sign, d_strength = parse_dline(dline)
@@ -114,8 +116,14 @@ def main():
 	# 	t.write('mean_leftforks\tmean_rightforks\n')
 	# 	t.write(str(l_mean) + '\t' + str(r_mean) + '\n')
 
+	# l_mean, r_mean = get_mean_ds(dfile, hfile)
+	# with open('fork_ds_means.txt', 'w') as t:
+	# 	t.write('mean_leftforks\tmean_rightforks\n')
+	# 	t.write(str(l_mean) + '\t' + str(r_mean) + '\n')
+
+
 	l_mean, r_mean = get_mean_ds(dfile, hfile)
-	with open('fork_ds_means.txt', 'w') as t:
+	with open('fork_ds_200kb_window_means.txt', 'w') as t:
 		t.write('mean_leftforks\tmean_rightforks\n')
 		t.write(str(l_mean) + '\t' + str(r_mean) + '\n')
 

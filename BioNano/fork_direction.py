@@ -41,6 +41,7 @@ def write_fork_scores(dfile, hfile, mfile, ofile, ds):
 		if True use sum of direction strength instead 
 		of raw fork counts
 	'''
+	window = 200000 # Look window size upstream and downstream of bin
 	OUT = open(ofile, 'w')
 	# Get mean left forks and mean right forks
 	with open(mfile, 'r') as m:
@@ -58,7 +59,7 @@ def write_fork_scores(dfile, hfile, mfile, ofile, ds):
 			ds_left_sum = 0
 			ds_right_sum = 0
 			h_chrom, h_start, h_end = hline.split()
-			intervalH = [int(h_start), int(h_end)]
+			intervalH = [int(h_start) - window, int(h_end) + window]
 			with open(dfile, 'r') as D:
 				for j, dline in enumerate(D):
 					d_chrom, d_start, d_end, d_sign, d_strength = parse_dline(dline)
@@ -94,9 +95,9 @@ def main():
 	dfile = 'direction_multi_segment_merge_clean_sorted.bed'
 	hfile = 'hg19_100kb_sorted.bed'
 	# mfile = 'fork_mean.txt'
-	mfile = 'fork_ds_means.txt'
+	mfile = 'fork_ds_200kb_window_means.txt'
 	# ofile = 'fork_direction.bedGraph'
-	ofile = 'fork_direction_ds.bedGraph'
+	ofile = 'fork_direction_ds_200kb_window.bedGraph'
 
 	# write_fork_scores(dfile, hfile, mfile, ofile)
 	ds = True
