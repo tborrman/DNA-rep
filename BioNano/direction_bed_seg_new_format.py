@@ -91,7 +91,8 @@ def main():
 	counter = 1
 	OUT = open(args.o, 'w')
 	# OUT2 is now just for red signal on molecules with > 0 segments (.bedGraphs)
-	OUT2 = open(args.o + 'Graph', 'w')
+	OUT_filtered = open(args.o[:-4] +'_filtered.bedGraph', 'w')
+	OUT_unfiltered = open(args.o[:-4] + '_unfiltered.bedGraph', 'w')
 	BNX = open(args.b, 'r')
 	if args.e:
 		min_redlabel = 3
@@ -139,29 +140,31 @@ def main():
 						aligned_red = aligned_red_bwd[::-1]
 					else:
 						'ERROR no orientation'
-						quit()
+						sys.exit()
+					# Get label intensity
+					next(BNX)
+					next(BNX)
+					next(BNX)
+					intensity_line = next(BNX)
+					if intensity_line.split()[0] != 'QX22':
+						print 'ERROR reading intensity'
+						sys.exit()
+					intensity = intensity_line.split()[1:]
+
+					if Orientation == '-':
+						intensity.reverse()			
+					# Write red signal bed file for unfiltered data
+					write_red_signal_bed(chrom, aligned_red, intensity, range(len(aligned_red)), OUT_unfiltered)
 
 					idx_red_to_keep = filter_red_labels(aligned_red)
 					if len(idx_red_to_keep) > 3: 
-						# Get label intensity
-						next(BNX)
-						next(BNX)
-						next(BNX)
-						intensity_line = next(BNX)
-						if intensity_line.split()[0] != 'QX22':
-							print 'ERROR reading intensity'
-							sys.exit()
-						intensity = intensity_line.split()[1:]
-
-						if Orientation == '-':
-							intensity.reverse()
-
+						
 						segment_idx = idx_start_and_end_segments(aligned_red, idx_red_to_keep)
 						# Nick wants single segments on a molecule included now
 						if len(segment_idx) > 0:
 
 							# Write red signal bed file for molecules with greater than 0 segments
-							write_red_signal_bed(chrom, aligned_red, intensity, idx_red_to_keep, OUT2)
+							write_red_signal_bed(chrom, aligned_red, intensity, idx_red_to_keep, OUT_filtered)
 
 							for segment_start_end in segment_idx:
 								# Get start and end of segment
@@ -180,7 +183,7 @@ def main():
 					# Check if xmap entries ever have reversed refpos
 					if RefStartPos >= float(xline[6]):
 						print 'WTF'
-						quit()
+						sys.exit()
 				XMAP.close()				
 		counter += 1
 
