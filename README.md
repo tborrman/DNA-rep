@@ -29,7 +29,7 @@ Input:
   
 Output: 
 
-* -o : bed like file where each row is a segment of filtered red label data with the following columns:
+* -o : (Example: Sync_HeLA_1708_direction.bed) bed like file where each row is a segment of filtered red label data with the following columns:
     * chrom
     * start
     * end
@@ -48,7 +48,26 @@ Output:
 * .bedGraphs for filtered red label tracks
 
 Viewing output tracks on IGV:
-![Alt](BioNano/Sync_HeLA_1708_ex.PNG "blahh")
+
+![Alt](BioNano/Sync_HeLA_1708_ex.PNG)
+
+To generate bam file for "Sync_HeLA_1708 segments" track above:
+```bash
+./cleanbed_for_bed.py Sync_HeLA_1708_direction.bed > Sync_HeLA_1708_direction_clean.bed
+sort -k1,1V -k2,2n Sync_HeLA_1708_direction_clean.bed > Sync_HeLA_1708_direction_clean_sorted.bed
+
+bedtools bedtobam -i Sync_HeLA_1708_direction_clean_sorted.bed -g hg19.genome > Sync_HeLA_1708_direction.bam
+samtools sort Sync_HeLA_1708_direction.bam Sync_HeLA_1708_direction_sort
+samtools index Sync_HeLA_1708_direction_sort.bam
+```
+
+
+
+
+
+
+
+
 
 
 
