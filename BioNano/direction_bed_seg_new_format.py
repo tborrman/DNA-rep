@@ -6,6 +6,7 @@ import numpy as np
 import sys
 parser = argparse.ArgumentParser(description='create bedfile for bionano data')
 parser.add_argument('-b', help='input bnx file', type=str, required=True)
+parser.add_argument('-x', help='input xmap file', type=str, required=True)
 parser.add_argument('-o', help='output bed file', type=str, required=True)
 parser.add_argument('-e', help='exclude singleton labels', type=bool, default=False)
 args = parser.parse_args()
@@ -115,7 +116,7 @@ def main():
 
 			if len(red_line.split()) > min_redlabel:
 
-				XMAP = open('exp_refineFinal1.xmap', 'r')
+				XMAP = open(args.x, 'r')
 				xmap_str = XMAP.read()
 				srch_obj =  re.search('\n\d+\t'+mol_id+'\t.+', xmap_str)
 				if srch_obj:
