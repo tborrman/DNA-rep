@@ -44,8 +44,8 @@ Output:
     Segmenting:  
     Molecules segmented if distance to next label is > 30kb
 
-* .bedGraphs for unfiltered red label tracks
-* .bedGraphs for filtered red label tracks
+* .bedGraph for unfiltered red label tracks
+* .bedGraph for filtered red label tracks
 
 Viewing output tracks on IGV:
 
@@ -60,6 +60,25 @@ bedtools bedtobam -i Sync_HeLA_1708_direction_clean_sorted.bed -g hg19.genome > 
 samtools sort Sync_HeLA_1708_direction.bam Sync_HeLA_1708_direction_sort
 samtools index Sync_HeLA_1708_direction_sort.bam
 ```
+**WARNING**
+> One problem in code is that sometimes it is not the first green label of a molecule in .bnx that maps to refStartPos in .xmap (could be  second, third, fourth, etc. but usually first). Or vice versa, its not the first green label that maps to refEndPos ('-' direction)  but instead maybe the second, third or fourth green label of a molecule is the first green label to map to refEndPos. These cases slightly shift the results off since I assume it is ALWAYS the first green label that is mapping to the nick position. Average bp distance between labels is only ~ 9kb, so this does not make much of a difference analyzing data at 100kb resolution. However, this will need to be fixed.
+
+**PARALLELIZE**
+
+For faster processing split bnx file to run [direction_bed_seg_new_format.py](BioNano/direction_bed_seg_new_format.py) in parallel
+
+```bash
+split -d -a 3 -l 350000 input.bnx input_split_bnx_
+./direction_bed_multi_controller.py
+```
+[direction_bed_multi_controller.py](BioNano/direction_bed_multi_controller.py) specific to LSF environment
+
+
+
+
+
+
+
 
 
 
